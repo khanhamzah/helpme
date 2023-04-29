@@ -1,40 +1,131 @@
-# from django.http import HttpResponse
-# from django.shortcuts import render
-# from app.models import Users
-# # , Posts, Chats, Message
+from django.http import HttpResponse
+from django.shortcuts import render
+from .models import User, Posts, Message
+import json
+# , Chats, Message
 
-# currentUser = "Ahan"
+def index (req) :
+	userId = req.COOKIES.get("id")
+	try:
+		userDetails = User.objects.get(id = userId)
+	except:
+		return render(req,'login.html')
+	
+	posts = []
+	postsQueried =  list(Posts.objects.all())[::-1]
+	for post in postsQueried :
+		posts.append({"postContent" : post.postContent, "postAuthor" : post.postAuthor.username, "postId" : post.id})
 
-# def index (req) :
-# 	if not currentUser :
-# 		return render(req, 'login.html')
-# 	# posts =  Posts.objects.all()
-# 	posts = [{"postContent" : "Hi, please help me by clicking the help me button and save me life for this once", "postAuthor": "Ahan Ray", "postId" : "1"},
-# 				{"postContent" : "Calling for help in the western region for supplying relif aid to the disaster struck areas", "postAuthor" : "Govt India", "postId" : "2"}]
-# 	params = {"posts" : {"posts" : posts}, "username" : currentUser}
-# 	return render(req, 'index.html', params)
+	params = {"posts" : {"posts" : posts}, "username" : userDetails.username or "unavailable"}
+	return render(req, 'index.html', params)
 
-# def makepost(req) :
-# 	content = req.GET.get("postContent")
-# 	postStatus = "false"
-# 	# if content and content != "None" :
-# 	# 	newPost = Posts(
-# 	# 		postcontent = content,
-# 	# 		postAuthor = currentUser
-# 	# 	)
-# 	# 	newPost.save()
-# 	# 	postStatus = "true"
+def makepost(req) :
+	userId = req.COOKIES.get("id")
+	try:
+		userDetails = User.objects.get(id = userId)
+	except:
+		return render(req,'login.html')
 
-# 	params = {"name" : currentUser, "postContent" : content, "postStatus" : postStatus, "errorMessage" : ""}
-# 	return render(req, 'post.html', params)
+	errorMessage = ""
+	postStatus = "false"
+	content = req.POST.get("postContent") or ""
+	if content and content != "None" :
+		newPost = Posts(
+			postContent = content,
+			postAuthor = userDetails
+		)
+		try :
+			newPost.save()
+			postStatus = "true"
+		except :
+			errorMessage = "! could not save post ¡"
 
-# def login(req) :
-# 	res = Users.objects.get(username = "Ahan Ray", password = "passwornd")
-# 	logStatus = "false"
-# 	if(len(res) == 1) :
-# 		logStatus = "true"
-# 	params = {"username" : "ahan", "password" : "not a pasword", "loginStatus" : logStatus}
-# 	return render(req, 'login.html', params)
+	params = {"postContent" : content, "postStatus" : postStatus, "errorMessage" : errorMessage, "username" : userDetails.username or "undefined"}
+	return render(req, 'post.html', params)
 
-# def	signup(req) :
-# 	return render(req, 'signup.html')
+def login(req) :
+	loginStatus = False
+	username = ""
+	password = ""
+	if req.method == 'POST' :
+		username = req.POST.get("username")
+		password = req.POST.get("password")
+
+	if username != "" and password != "" :
+		try :
+			ret = User.objects.get(username = username, password = password)
+			loginStatus = True
+			username = ret.id
+		except:
+			loginStatus = False
+	params = {"username" : username, "password" : password, "loginStatus" : loginStatus}
+	return render(req, 'login.html', params)
+
+def	signup(req) :
+	errorMessage = ""
+	status = "false"
+	newUsername = req.POST.get("new-username")
+	newPassword = req.POST.get("new-password")
+	if newUsername and newPassword :
+		try :
+			newUser = User(
+				username = newUsername,
+				password = newPassword
+			)
+			newUser.save()
+			newUsername = newUser.id
+			status = "true"
+		except :
+			errorMessage = "username taken"
+	elif not newUsername and not newPassword :
+		pass
+	else :
+		errorMessage = "empty"
+			
+	return render(req, 'signup.html', {"error" : errorMessage, "status" : status, "username" : newUsername or "", "password" : newPassword or ""})
+
+def profileShow(req, userId) :
+	userDetails = {}
+	posts = []
+	try :
+		userDetails = User.objects.get(id = userId)
+		try :
+			postList = Posts.objects.filter(postAuthor = userDetails)
+			for post in postList :
+				posts.append({"postContent" : post.postContent, "postAuthor" : post.postAuthor.username, "postId" : post.id})
+		except :
+			posts = []
+	except:
+		userDetails = {"username" : "user not available"}
+
+	return render(req, 'profile.html',{"username" : userDetails.username ,"profileName" : userDetails.username, "profileContent" : {"posts" : posts}})
+
+def messaging(req, postId):
+	userId = req.COOKIES.get("id")
+	userDetails = {}
+	userMessages = []
+	try:
+		userDetails = User.objects.get(id = userId)
+	except:
+		return render(req,'login.html')
+	
+	try:
+		userMessages = Message.objects.filter(postId = Posts.objects.get(id = postId))
+	except:
+		userMessages = []
+	msgs = [{"message":x.message, "userId":x.userId.username} for x in userMessages]
+	return render(req, "chat.html", { "username": userDetails.username, "messages": msgs, "profileName" : userDetails.username, "postId" : postId, "post": Posts.objects.get(id = postId) })
+
+def addMessage(req, postId, message):
+
+	try:
+		newMessagage = Message(
+			postId = Posts.objects.get(id = postId),
+			userId = User.objects.get(id = req.COOKIES.get("id")),
+			message = message
+		)
+		newMessagage.save()
+	except:
+		return HttpResponse("False")
+
+	return HttpResponse(json.dumps({"userId":newMessagage.userId.username,"message":newMessagage.message}))
