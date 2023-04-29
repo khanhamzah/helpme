@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login for Helpme</title>
+</head>
+<body>
+    {% include "components/setup.html" %}
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        form {
+            width: 25%;
+            min-width: 250px;
+            padding: 4ch;
+            box-shadow: 0 0 7px 1px rgba(0, 0, 0, 0.259);
+            border-radius: 1ch;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        form>.details {
+            margin-bottom: 4ch;
+            width: 100%;
+            display: grid;
+            grid-template-rows: repeat(5, max-content);
+        }
+
+        form>.details>input {
+            padding: 1ch;
+            margin: 0.5ch 0;
+            border: 1px solid rgba(0, 0, 0, 0.255);
+            border-radius: 0.5ch;
+
+        }
+
+        form>.details>label {
+            margin: 0.5ch 0;
+        }
+
+        form>.details>button {
+            padding: 1ch;
+            margin: 1.5ch 0;
+            border-radius: 0.5ch;
+            border: 1px solid rgba(0, 0, 0, 0.251);
+        }
+
+        .error {
+            background-color: rgba(238, 166, 166, 0.818);
+        }
+    </style>
+    <form action="/login" method="post">
+        {% csrf_token %}
+        <h2>Helpme</h2>
+        <div class="details">
+            <label for="username">Username :</label>
+            <input type="text" id="username" name="username" placeholder="enter username" value="{{ username }}" autocomplete="current-username">
+            <label for="password">password :</label>
+            <input type="password" name="password" id="password" placeholder="enter password" value="{{ password }}" autocomplete="current-password">
+            <button type="submit">Login</button>
+        </div>
+        <a href="/signup">sign up</a>
+    </form>
+    {% include "components/notificationsLib.html" %}
+    <script>
+        let loginStatus = `{{ loginStatus }}`;
+        console.log(loginStatus);
+        if(loginStatus.toLocaleLowerCase() == "true") {
+            let d = new Date();
+            d.setTime(d.getTime() + 3*24*60*60*1000)
+            document.cookie = "id="+document.querySelector("input[name=username]").value+";expires="+d.toUTCString+";path=/";
+            window.location.pathname = "";
+        }
+        else {
+            document.querySelectorAll("input").forEach(e => {
+                if(e.value != "") {
+                    e.classList.add("error");
+                }
+            });
+        }
+
+        if(window.location.search == "?logout") {
+            document.cookie = "id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            console.log("logged out")
+            notify("Logged out :(")
+        }
+        </script>
+</body>
+</html>

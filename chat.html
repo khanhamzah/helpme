@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat :: HelpMe</title>
+    <style>
+        .messages {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr;
+            padding: 2ch;
+            box-sizing: border-box;
+            margin-bottom: 10ch;
+        }
+
+        .message {
+            border-radius: 1ch;
+            border: solid rgba(0, 0, 0, 0.418) 1px;
+            min-height: 5ch;
+            width: max-content;
+            padding: 1ch;
+            margin: 0 0 1ch 0;
+        }
+
+        .message>h3 {
+            padding: 0ch 0 0.25ch 0;
+            margin: 0;
+        }
+
+        .input-section {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 8ch;
+            gap: 2ch;
+            padding: 2ch;
+            background-color: white;
+            box-sizing: border-box;
+            box-shadow: #ffffffd5 0px -20px 20px 0px;
+        }
+
+        .input-section>input {
+            padding: 2ch;
+            box-sizing: border-box;
+            border-radius: 1ch;
+            border: solid rgba(0, 0, 0, 0.641) 1px;
+        }
+
+        .post {
+            padding: 0 0 1ch 2ch;
+            border-bottom: solid 1px #00000045;
+        }
+
+    </style>
+</head>
+<body>
+    {% include "components/setup.html" %}
+    {% include "components/header.html" %}
+    {% include "components/stringfunction.html" %}
+    {% include "components/notificationsLib.html" %}
+    <div class="post">
+        <h3 style="margin: 1ch 0;" class="postAuthor">{{ post.postAuthor.username }}</h3>
+        <div class="postContent">
+            {{ post.postContent }}
+        </div>
+    </div>
+    <div class="messages">
+        <template id="message-template">
+            <div class="message">
+                <h3 class="author" >Ahan</h3>
+                <span class="message-content" >This is his message</span>
+            </div>
+        </template>
+    </div>
+    <form class="input-section" onsubmit="sendMessage(event)" >
+        <input type="text" name="message" placeholder="Enter message here" autocomplete="off">
+        <input type="submit" value="send">
+    </form>
+    <script>
+
+        const chatString = `{{ messages }}`.decodeHTML().doubleQuotesOnly().replaceAll("\r","").replaceAll("\n"," ");
+        const chats = JSON.parse(chatString);
+
+        const messageTemplate = document.getElementById("message-template").content;
+        const messageBox = document.querySelector(".messages");
+
+        console.log(chats);
+        for(let chat of chats) {
+            console.log(chat);
+            addText(chat);
+        }
+
+        function sendMessage(evt) {
+            evt.preventDefault()    ;
+            evt.target.classList.add("input-freeze")
+            const message = new FormData(evt.target).get("message")
+            console.log(message);
+            // send the message to the server
+            fetch("http://localhost:8000/addmessage/{{ postId }}/"+message, {
+                credentials: "include",
+            }).then(res=>res.json()).then(res=>{
+                console.log(res);
+                addText(res);
+            });
+            // append the message to the view if it was succesful
+            evt.target.querySelector("input[name=message]").value = "";
+            addText()
+            evt.target.classList.remove("input-freeze")
+        }
+
+        function addText(message) {
+            const emptyMessage = messageTemplate.cloneNode(true);
+            console.log(emptyMessage);
+            emptyMessage.querySelector(".author").innerText = message.userId;
+            emptyMessage.querySelector(".message-content").innerText = message.message;
+            messageBox.appendChild(emptyMessage);
+        }
+    </script>
+</body>
+</html>

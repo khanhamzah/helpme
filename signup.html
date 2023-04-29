@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup for helpme</title>
+</head>
+<body>
+    {% include "components/setup.html" %}
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        form {
+            padding: 4ch;
+            box-sizing: border-box;
+            width: 30%;
+            min-width: 250px;
+            display: grid;
+            border-radius: 1ch;
+            box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.244);
+        }
+
+        form > input {
+            padding :1ch;
+            margin: 1ch 0;
+            box-sizing: border-box;
+            border-radius: 0.5ch;
+            border: 1px solid rgba(0, 0, 0, 0.241);
+        }
+
+        form > button {
+            margin: 1ch 0;
+            padding: 1ch;
+            border-radius: 0.5ch;
+            border: 1px solid rgba(0, 0, 0, 0.244);
+        }
+
+        form > h2 {
+            text-align: center;
+            margin-bottom: 3ch;
+        }
+
+        form > a {
+            margin-top: 3ch;
+            text-align: center;
+        }
+
+        .error {
+            background-color: rgb(255, 176, 176);
+        }
+
+        .errorMessage {
+            color: red;
+            font-size: 0.8rem;
+        }
+    </style>
+    <form action="" method="post">
+        {% csrf_token %}
+        <h2>Signup for Helpme</h2>
+        <div class="errorMessage"></div>
+        <label for="new-username">Select username:</label>
+        <input type="text" name="new-username" id="new-username" placeholder="Eg:Ahan Ray" autocomplete="username" value="{{ username }}">
+        <label for="new-password">Select password:</label>
+        <input type="password" name="new-password" id="new-password" placeholder="Eg:$3cURe_pW" autocomplete="new-password" value="{{ password }}">
+        <button type="submit">Create Account</button>
+        <a href="./login">log in</a>
+    </form>
+
+    <script>
+        let errorMessage = `{{ error }}`;
+        let status = `{{ status }}`;
+
+        if(errorMessage == "empty") {
+            document.querySelectorAll("input").forEach(e => e.classList.add("error"))
+        }
+        else {
+            document.querySelector(".errorMessage").innerText = errorMessage;
+        }
+
+        if(status.toLowerCase() == "true") {
+            let d = new Date();
+            d.setTime(d.getTime() + 3*24*60*60*1000);
+            document.cookie = "id="+document.querySelector("input[name=new-username]").value+";expires="+d.toUTCString+";path=/";
+            window.location.href = window.location.origin + "/?newuser";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make a post</title>
+</head>
+<body>
+    {% include "components/setup.html" %}
+    <style>
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 50%;
+            margin: auto;
+        }
+
+        form>button {
+            padding: 1.5ch;
+            margin: 1.5ch 0;
+            width: max-content;
+            align-self: flex-end;
+            border-radius: 1ch;
+            border: 1px solid rgba(0, 0, 0, 0.252);
+            cursor: pointer;
+        }
+
+        form > button:hover {            
+            background: rgb(226, 233, 223);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 2ch;
+            font: inherit;
+            resize: none;
+            box-sizing: border-box;
+            border-radius: 1ch;
+        }
+
+        span.errorMessage {
+            color: rgb(189, 43, 21);
+            font-size: 0.8rem;
+        }
+    </style>
+    <base href="http://localhost:8000">
+    {% include "components/header.html" %}
+    <form class="postEditor" action="" method="post">
+        {% csrf_token %}
+        <h3 style="margin: 1ch 0;">{{ username }}</h3>
+        <textarea name="postContent" id="postContent" cols="30" rows="10" placeholder="Start writing a post">{{ postContent }}</textarea>
+        <span class="errorMessage">{{ errorMessage }}</span>
+        <button type="submit">make post</button>
+    </form>
+    <script>
+        let postContent = "{{ postContent }}";
+        let postStatus = "{{ postStatus }}";
+        console.log(postStatus);
+        if(postStatus == "true") {
+            window.location.href = window.location.origin + "/?posted"
+        }
+
+        document.querySelector("textarea").focus();
+    </script>
+</body>
+</html>
